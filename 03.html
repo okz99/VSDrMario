@@ -1,0 +1,1978 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>VS CAPSULE LAB</title>
+<style>
+:root{
+  --bg:#0f1429;
+  --panel:#1b2241;
+  --ink:#f6edc8;
+  --dark:#080b18;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;
+  background:#090d1c;touch-action:none;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+#app{
+  width:100%;height:100dvh;max-width:520px;margin:0 auto;position:relative;
+  overflow:hidden;background:var(--bg);
+}
+.playerZone{
+  position:absolute;left:0;width:100%;height:11%;
+  background:linear-gradient(#20294c,#131931);
+  z-index:4;
+}
+#topZone{top:0;transform:rotate(180deg)}
+#bottomZone{bottom:0}
+.zoneInner{
+  position:relative;width:100%;height:100%;
+}
+.info{display:none}
+.preview{
+  position:relative;left:auto;top:auto;
+  width:auto;height:58px;
+  border:3px solid #080b18;background:#11182f;border-radius:10px;
+  flex:1.18 1 0;
+  min-width:0;
+}
+.controls{
+  position:absolute;left:1%;right:1%;top:50%;height:auto;
+  transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:space-between;gap:4px;
+}
+.moveButtons,.buttons{
+  display:contents;
+}
+.moveBtn{
+  width:auto;height:58px;flex:1 1 0;min-width:0;
+  border-radius:12px;background:#59627f;font-size:clamp(20px,5vw,28px);
+}
+.action{
+  border:none;color:#fff;font-weight:900;text-shadow:0 2px #000;
+  border:4px solid #070a15;box-shadow:inset 0 3px rgba(255,255,255,.25),0 4px #060811;
+  border-radius:14px;touch-action:none;padding:0;
+}
+.rotateBtn{width:auto;height:58px;flex:1 1 0;min-width:0;background:#397dd0;font-size:clamp(10px,2.8vw,13px)}
+.fireBtn{width:auto;height:58px;flex:1 1 0;min-width:0;background:#db3851;font-size:clamp(11px,3vw,14px)}
+.action.down{transform:translateY(3px);box-shadow:inset 0 3px rgba(255,255,255,.18),0 1px #060811}
+.iconBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.fireMark{
+  font-size:clamp(18px,5vw,28px);
+  line-height:1;
+  transform:translateY(-1px);
+}
+#boardWrap{
+  position:absolute;left:0;top:11%;width:100%;height:78%;z-index:1;
+  background:#0d1226;
+}
+#game{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+#centerLabel{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  color:rgba(255,255,255,.14);font-weight:1000;letter-spacing:4px;
+  font-size:clamp(18px,5vw,28px);pointer-events:none;
+}
+#turnBanner{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  padding:8px 13px;background:rgba(4,6,14,.88);color:#fff;border:3px solid #fff;
+  font-weight:1000;font-size:clamp(13px,3.4vw,17px);z-index:5;pointer-events:none;
+  opacity:0;transition:opacity .15s;
+}
+#topMenu{
+  position:absolute;right:6px;top:calc(11% + 6px);z-index:8;display:flex;gap:5px;
+}
+.mini{
+  border:2px solid #080b18;border-radius:6px;background:#f2e7b6;color:#1d2440;
+  font-size:11px;font-weight:900;padding:5px 7px;box-shadow:0 2px #080b18;
+}
+.resetBtn{
+  background:#d9d9d9;
+  color:#222;
+}
+#overlay{
+  position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,7,17,.86);
+}
+.panel{
+  width:86%;padding:20px 16px;background:#f1e7b5;color:#1d2440;text-align:center;
+  border:6px solid #1d2440;box-shadow:0 0 0 4px #f1e7b5,0 0 0 8px #1d2440;
+}
+.panel h1{margin:0 0 8px;font-size:26px}
+.panel p{margin:6px 0;line-height:1.55;font-size:13px}
+#startBtn{
+  margin-top:10px;border:0;background:#d93750;color:#fff;font-weight:900;
+  font-size:17px;padding:11px 24px;box-shadow:0 4px #7c1829;
+}
+.hidden{display:none!important}
+
+/* 操作ボタンを角丸長方形に統一 */
+.controlRow button,
+.ctrlRow button,
+.controls button,
+.playerControls button,
+button.ctrl,
+button.actionBtn,
+button {
+  border-radius: 14px !important;
+  aspect-ratio: auto !important;
+  min-width: 0;
+  height: 58px;
+  padding: 0 6px;
+}
+
+
+.rotateImg{
+  display:block;
+  width:24px;
+  height:24px;
+  object-fit:contain;
+  margin:auto;
+  image-rendering:auto;
+}
+
+
+.rotateWhiteIcon{display:block;width:30px;height:30px;margin:auto;overflow:visible}
+.rotateWhiteIcon .arc{fill:none;stroke:#fff;stroke-width:13;stroke-linecap:round}
+.rotateWhiteIcon .arrowHead{fill:#fff;stroke:none}
+
+
+/* 点数表示は使用しない */
+[id*="score" i],
+[class*="score" i],
+[id*="point" i],
+[class*="point" i]{
+  display:none !important;
+}
+
+
+/* iPhone端誤操作防止用の黒い安全余白 */
+#topSafeZone,
+#bottomSafeZone{
+  position:absolute;
+  left:0;
+  width:100%;
+  height:29px;
+  background:#000;
+  z-index:50;
+  pointer-events:auto;
+}
+#topSafeZone{top:0;}
+#bottomSafeZone{bottom:0;}
+
+/* 既存のゲーム領域を安全余白の内側へ収める */
+#topZone{
+  top:29px !important;
+}
+#bottomZone{
+  bottom:29px !important;
+}
+.playerZone{
+  height:calc(11% - 3.2px) !important;
+}
+#boardWrap{
+  top:calc(11% + 26px) !important;
+  height:calc(78% - 52px) !important;
+}
+#topMenu{
+  top:calc(11% + 32px) !important;
+}
+
+
+/* 対戦モード・COMレベル選択 */
+.modeSelect,.levelSelect{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin:8px 0;
+  flex-wrap:wrap;
+}
+.modeChoice,.levelChoice{
+  height:36px !important;
+  min-width:54px !important;
+  padding:0 10px !important;
+  border:2px solid #1d2440 !important;
+  border-radius:8px !important;
+  background:#d8d2ad;
+  color:#1d2440;
+  font-weight:900;
+  font-size:12px;
+  box-shadow:0 2px #8c845f;
+}
+.modeChoice.selected,.levelChoice.selected{
+  background:#d93750;
+  color:#fff;
+  box-shadow:0 2px #7c1829;
+}
+#levelLabel{
+  margin-top:8px;
+  font-weight:900;
+  font-size:12px;
+}
+#topZone.comMode .action{
+  opacity:.34;
+  pointer-events:none;
+}
+#topZone.comMode .preview{
+  opacity:1;
+}
+#comBadge{
+  display:none;
+  position:absolute;
+  left:50%;
+  bottom:2px;
+  transform:translateX(-50%);
+  color:#fff;
+  background:rgba(0,0,0,.45);
+  border-radius:8px;
+  padding:2px 7px;
+  font-size:10px;
+  font-weight:900;
+  pointer-events:none;
+  z-index:6;
+}
+#topZone.comMode #comBadge{display:block;}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topSafeZone" aria-hidden="true"></div>
+  <div id="bottomSafeZone" aria-hidden="true"></div>
+  <div id="topZone" class="playerZone">
+    <div class="zoneInner">
+      <div class="info">PLAYER 2<br><span class="score" id="score2"></span> 点<br>消去 <span id="kills2"></span></div>
+      <div class="controls">
+        <div class="moveButtons">
+          <button class="action moveBtn" id="left2">◀</button>
+          <button class="action moveBtn" id="right2">▶</button>
+        </div>
+        <canvas class="preview" id="preview2"></canvas>
+        <div class="buttons">
+          <button class="action rotateBtn" id="rot2" class="action rotateBtn iconBtn"><svg class="rotateWhiteIcon" viewBox="0 0 100 100" aria-hidden="true"><path class="arc" d="M77 34 A34 34 0 1 0 82 60"/><path class="arrowHead" d="M67 18 L84 27 L68 39 Z"/></svg></button>
+          <button class="action fireBtn" id="fire2" class="action fireBtn iconBtn"><span class="fireMark">▲</span></button>
+        </div>
+      </div>
+      <div id="comBadge">COM LV3</div>
+    </div>
+  </div>
+
+  <div id="boardWrap">
+    <canvas id="game"></canvas>
+    <div id="centerLabel"></div>
+    <div id="turnBanner"></div>
+  </div>
+
+  <div id="bottomZone" class="playerZone">
+    <div class="zoneInner">
+      <div class="info">PLAYER 1<br><span class="score" id="score1"></span> 点<br>消去 <span id="kills1"></span></div>
+      <div class="controls">
+        <div class="moveButtons">
+          <button class="action moveBtn" id="left1">◀</button>
+          <button class="action moveBtn" id="right1">▶</button>
+        </div>
+        <canvas class="preview" id="preview1"></canvas>
+        <div class="buttons">
+          <button class="action rotateBtn" id="rot1" class="action rotateBtn iconBtn"><svg class="rotateWhiteIcon" viewBox="0 0 100 100" aria-hidden="true"><path class="arc" d="M77 34 A34 34 0 1 0 82 60"/><path class="arrowHead" d="M67 18 L84 27 L68 39 Z"/></svg></button>
+          <button class="action fireBtn" id="fire1" class="action fireBtn iconBtn"><span class="fireMark">▲</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="topMenu">
+<button class="mini resetBtn" id="resetBtn">RESET</button>
+  </div>
+
+  <div id="overlay">
+    <div class="panel">
+      <h1>VS CAPSULE LAB</h1>
+      <p>対戦モードを選んでください。</p>
+      <div class="modeSelect">
+        <button type="button" class="modeChoice" data-mode="human">2人対戦</button>
+        <button type="button" class="modeChoice selected" data-mode="com">VS COM</button>
+      </div>
+      <div id="levelLabel">COMの強さ</div>
+      <div class="levelSelect" id="levelSelect">
+        <button type="button" class="levelChoice" data-level="1">1</button>
+        <button type="button" class="levelChoice" data-level="2">2</button>
+        <button type="button" class="levelChoice selected" data-level="3">3</button>
+        <button type="button" class="levelChoice" data-level="4">4</button>
+        <button type="button" class="levelChoice" data-level="5">5</button>
+      </div>
+      <p>手前がPLAYER 1です。VS COMでは上側をCOMが操作します。</p>
+      <p>同色4個以上で消去します。ウイルスを消すと、まず残ったカプセルが中央線へ落下し、その後ウイルス・カプセル・中央線を含む盤面全体が相手側へ1行移動します。ウイルスを消すと、相手側のウイルス・カプセル・中央線を含む盤面全体が必ず1行相手側へ移動します。押し出される最外周行にウイルスまたはカプセルが1つでもある場合は、それ以上押せないため相手がゲームオーバーです。最外周行が完全な空白なら1行移動して続行します。通常4消しと連鎖では前線ゲージも増えます。</p>
+      <button id="startBtn">対戦開始</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var COLS=10, ROWS=22;
+var COLORS=['R','B','Y'];
+var canvas=document.getElementById('game');
+var ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+var wrap=document.getElementById('boardWrap');
+var banner=document.getElementById('turnBanner');
+var overlay=document.getElementById('overlay');
+var startBtn=document.getElementById('startBtn');
+var resetBtn=document.getElementById('resetBtn');
+var topZone=document.getElementById('topZone');
+var comBadge=document.getElementById('comBadge');
+var levelSelect=document.getElementById('levelSelect');
+
+var scoreEls=[null,document.getElementById('score1'),document.getElementById('score2')];
+var killEls=[null,document.getElementById('kills1'),document.getElementById('kills2')];
+var leftBtns=[null,document.getElementById('left1'),document.getElementById('left2')];
+var rightBtns=[null,document.getElementById('right1'),document.getElementById('right2')];
+var rotBtns=[null,document.getElementById('rot1'),document.getElementById('rot2')];
+var fireBtns=[null,document.getElementById('fire1'),document.getElementById('fire2')];
+var previews=[null,document.getElementById('preview1'),document.getElementById('preview2')];
+
+var dpr=1,W=1,H=1,cell=24,bx=0,by=0,bw=0,bh=0;
+var board=[];
+var turn=1;
+var players={
+  1:{score:0,kills:0,col:3,rot:0,next:null,shots:0},
+  2:{score:0,kills:0,col:3,rot:0,next:null,shots:0}
+};
+var paused=false,animating=false,gameEnded=false;
+var shot=null;
+var clearSet=[],clearTimer=0;
+var gravityAnim=null;
+var gravityOwner=0;
+var fadeCapsules=[];
+var fadeDuration=1000;
+var pendingTurnSwitch=false;
+var postFadeGravity=false;
+
+// 可動式の前線
+var frontLine=Math.floor(ROWS/2);
+var frontMin=5;
+var frontMax=ROWS-5;
+var frontGauge={1:0,2:0};
+var frontShiftAnim=null;
+var pendingGravityOwner=0;
+var chainDepth=0;
+var pendingFieldShiftCount=0;
+var pendingFieldShiftOwner=0;
+var fieldShiftAnim=null;
+// 1手の中での押し込み管理
+var turnVirusCleared=false;
+var chainPushBonusAwarded=false;
+// 入口で先端だけ着地し4消しになった時、盤外側の後端色を次に落とす
+var pendingRearShot=null; // 互換用。新ルールでは使用しない
+var last=performance.now();
+var tileCache={};
+var virusAnimTime=0;
+
+// 対戦モード
+var gameMode='com'; // 'com' または 'human'
+var comLevel=3;
+var comTimer=null;
+var off=document.createElement('canvas');
+var og=off.getContext('2d');
+
+function color(){return COLORS[(Math.random()*COLORS.length)|0];}
+function makePair(){return [color(),color()];}
+function resetBoard(){
+  board=[];
+  for(var y=0;y<ROWS;y++){
+    var r=[];
+    for(var x=0;x<COLS;x++)r.push(null);
+    board.push(r);
+  }
+}
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  W=Math.max(1,wrap.clientWidth);
+  H=Math.max(1,wrap.clientHeight);
+  canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);
+  off.width=canvas.width;off.height=canvas.height;
+  // 以前の見た目サイズを極力維持しつつ、10列×22行を収める
+  cell=Math.floor(Math.min((W*0.96)/COLS,(H*0.985)/ROWS));
+  if(cell<14)cell=14;
+  bw=cell*COLS;bh=cell*ROWS;
+  bx=Math.floor((W-bw)/2);by=Math.floor((H-bh)/2);
+  tileCache={};
+  drawPreviews();
+}
+window.addEventListener('resize',resize);
+
+function clearInitialMatches(){
+  var m=findMatches();
+  var guard=0;
+  while(m.length&&guard++<50){
+    for(var i=0;i<m.length;i++){
+      var p=m[i],o=board[p[1]][p[0]];
+      if(o&&o.kind==='virus')o.color=color();
+    }
+    m=findMatches();
+  }
+}
+function placeViruses(){
+  var topCandidates=[];
+  var bottomCandidates=[];
+
+  // 上下それぞれ手前4段は空ける。
+  // 中央線を境にPLAYER 2側（上半分）とPLAYER 1側（下半分）へ分ける。
+  var mid=Math.floor(ROWS/2);
+
+  for(var y=4;y<mid;y++){
+    for(var x=0;x<COLS;x++)topCandidates.push([x,y]);
+  }
+
+  for(var y=mid;y<ROWS-4;y++){
+    for(var x=0;x<COLS;x++)bottomCandidates.push([x,y]);
+  }
+
+  function shuffle(list){
+    for(var i=list.length-1;i>0;i--){
+      var j=(Math.random()*(i+1))|0;
+      var t=list[i];list[i]=list[j];list[j]=t;
+    }
+  }
+
+  shuffle(topCandidates);
+  shuffle(bottomCandidates);
+
+  var perPlayer=10;
+
+  for(var i=0;i<perPlayer&&i<topCandidates.length;i++){
+    var p=topCandidates[i];
+    board[p[1]][p[0]]={kind:'virus',color:color(),owner:2,id:0};
+  }
+
+  for(var i=0;i<perPlayer&&i<bottomCandidates.length;i++){
+    var p=bottomCandidates[i];
+    board[p[1]][p[0]]={kind:'virus',color:color(),owner:1,id:0};
+  }
+
+  clearInitialMatches();
+}
+function newGame(){
+  if(comTimer){clearTimeout(comTimer);comTimer=null;}
+  resetBoard();placeViruses();
+  players[1]={score:0,kills:0,col:3,rot:0,next:makePair(),shots:0};
+  players[2]={score:0,kills:0,col:3,rot:0,next:makePair(),shots:0};
+  turn=1;paused=false;animating=false;gameEnded=false;shot=null;clearSet=[];
+  gravityAnim=null;gravityOwner=0;fadeCapsules=[];pendingTurnSwitch=false;postFadeGravity=false;
+  frontLine=Math.floor(ROWS/2);frontGauge={1:0,2:0};frontShiftAnim=null;pendingGravityOwner=0;chainDepth=0;pendingFieldShiftCount=0;pendingFieldShiftOwner=0;fieldShiftAnim=null;pendingRearShot=null;turnVirusCleared=false;chainPushBonusAwarded=false;
+  updateHud();drawPreviews();updateModeUI();showTurn();
+  overlay.classList.add('hidden');
+}
+function remainingViruses(){
+  var n=0;
+  for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
+    if(board[y][x]&&board[y][x].kind==='virus')n++;
+  }
+  return n;
+}
+function updateHud(){
+  for(var p=1;p<=2;p++){
+    scoreEls[p].textContent=players[p].score;
+    killEls[p].textContent=players[p].kills;
+  }
+}
+function showTurn(){
+  if(gameMode==='com'&&turn===2){
+    banner.textContent='COM LEVEL '+comLevel;
+  }else{
+    banner.textContent='PLAYER '+turn+' の手番';
+  }
+  banner.style.opacity='1';
+  setTimeout(function(){banner.style.opacity='0';},650);
+}
+function orientationCells(player,col,rot){
+  if(rot===0)return [{x:col,y:0,index:0},{x:col+1,y:0,index:1}];
+  if(rot===1)return [{x:col,y:0,index:0},{x:col,y:1,index:1}];
+  if(rot===2)return [{x:col,y:0,index:0},{x:col-1,y:0,index:1}];
+  return [{x:col,y:0,index:0},{x:col,y:-1,index:1}];
+}
+function validAim(p){
+  var pl=players[p];
+  if(pl.col<0||pl.col>=COLS)return false;
+  if(pl.rot===0 && pl.col>=COLS-1)return false; // 右向き横
+  if(pl.rot===2 && pl.col<=0)return false;      // 左向き横
+  return true;
+}
+function rotateAim(p){
+  if(p!==turn||paused||animating||gravityAnim||frontShiftAnim||fieldShiftAnim||gameEnded)return;
+  players[p].rot=(players[p].rot+1)%4;
+
+  // 横向きで盤面外へ出ないように列を補正
+  if(players[p].rot===0 && players[p].col>=COLS-1)players[p].col=COLS-2;
+  if(players[p].rot===2 && players[p].col<=0)players[p].col=1;
+
+  drawPreviews();
+}
+
+function moveAim(p,dir){
+  if(p!==turn||paused||animating||gravityAnim||frontShiftAnim||fieldShiftAnim||gameEnded)return;
+
+  var min=0,max=COLS-1;
+  if(players[p].rot===0)max=COLS-2; // 右向き横
+  if(players[p].rot===2)min=1;      // 左向き横
+
+  players[p].col=Math.max(min,Math.min(max,players[p].col+dir));
+}
+function expireOldCapsules(p){ return false; }
+
+function updateFadeCapsules(dt){
+  if(!fadeCapsules.length)return;
+
+  for(var i=fadeCapsules.length-1;i>=0;i--){
+    var f=fadeCapsules[i];
+    f.elapsed+=dt;
+
+    if(f.elapsed>=fadeDuration){
+      if(board[f.y] && board[f.y][f.x]===f.obj){
+        board[f.y][f.x]=null;
+      }
+      fadeCapsules.splice(i,1);
+    }
+  }
+
+  if(fadeCapsules.length===0 && pendingTurnSwitch){
+    pendingTurnSwitch=false;
+
+    // 古いカプセルが消えたことで浮いたカプセルがあれば、
+    // 次の手番へ行く前に中央線方向へ落下させる。
+    var groups=collectAllGravityGroups(owner);
+
+    if(groups.length){
+      postFadeGravity=true;
+      gravityAnim={
+        owner:turn,
+        progress:0,
+        duration:110,
+        groups:groups
+      };
+    }else{
+      completeTurnSwitch();
+    }
+  }
+}
+
+function isFadingCell(x,y){
+  for(var i=0;i<fadeCapsules.length;i++){
+    if(fadeCapsules[i].x===x&&fadeCapsules[i].y===y)return true;
+  }
+  return false;
+}
+
+
+
+function cloneBoardForAI(){
+  var b=[];
+  for(var y=0;y<ROWS;y++){
+    var row=[];
+    for(var x=0;x<COLS;x++){
+      var o=board[y][x];
+      row.push(o ? {
+        kind:o.kind,
+        color:o.color,
+        owner:o.owner,
+        id:o.id
+      } : null);
+    }
+    b.push(row);
+  }
+  return b;
+}
+
+function aiShotCells(col,rot,colors,pos){
+  if(rot===0)return [{x:col,y:pos,color:colors[0]},{x:col+1,y:pos,color:colors[1]}];
+  if(rot===1)return [{x:col,y:pos,color:colors[0]},{x:col,y:pos+1,color:colors[1]}];
+  if(rot===2)return [{x:col,y:pos,color:colors[0]},{x:col-1,y:pos,color:colors[1]}];
+  return [{x:col,y:pos,color:colors[0]},{x:col,y:pos-1,color:colors[1]}];
+}
+
+function aiCanOccupy(b,cells){
+  for(var i=0;i<cells.length;i++){
+    var c=cells[i];
+    if(c.x<0||c.x>=COLS)return false;
+    if(c.y>=0&&c.y<ROWS&&b[c.y][c.x])return false;
+  }
+  return true;
+}
+
+function aiFindMatches(b){
+  var mark={};
+  for(var y=0;y<ROWS;y++){
+    var x=0;
+    while(x<COLS){
+      if(!b[y][x]){x++;continue;}
+      var col=b[y][x].color,start=x;
+      while(x<COLS&&b[y][x]&&b[y][x].color===col)x++;
+      if(x-start>=4)for(var k=start;k<x;k++)mark[k+','+y]=1;
+    }
+  }
+  for(var x=0;x<COLS;x++){
+    var y=0;
+    while(y<ROWS){
+      if(!b[y][x]){y++;continue;}
+      var col=b[y][x].color,start=y;
+      while(y<ROWS&&b[y][x]&&b[y][x].color===col)y++;
+      if(y-start>=4)for(var k=start;k<y;k++)mark[x+','+k]=1;
+    }
+  }
+  var out=[];
+  for(var key in mark){
+    if(Object.prototype.hasOwnProperty.call(mark,key)){
+      var a=key.split(',');
+      out.push([parseInt(a[0],10),parseInt(a[1],10)]);
+    }
+  }
+  return out;
+}
+
+function aiPotentialRun(b,x,y,color){
+  var best=1;
+  var dirs=[[1,0],[0,1]];
+  for(var d=0;d<dirs.length;d++){
+    var dx=dirs[d][0],dy=dirs[d][1],n=1;
+    var xx=x-dx,yy=y-dy;
+    while(xx>=0&&xx<COLS&&yy>=0&&yy<ROWS&&b[yy][xx]&&b[yy][xx].color===color){
+      n++;xx-=dx;yy-=dy;
+    }
+    xx=x+dx;yy=y+dy;
+    while(xx>=0&&xx<COLS&&yy>=0&&yy<ROWS&&b[yy][xx]&&b[yy][xx].color===color){
+      n++;xx+=dx;yy+=dy;
+    }
+    if(n>best)best=n;
+  }
+  return best;
+}
+
+function aiSimulateMove(col,rot){
+  // fire(2)時に色順が反転するため、実際の発射順で評価する
+  var colors=[players[2].next[1],players[2].next[0]];
+  var b=cloneBoardForAI();
+  var pos=-1;
+  var guard=0;
+
+  while(guard++<ROWS+6){
+    var nextPos=pos+1;
+    var nextCells=aiShotCells(col,rot,colors,nextPos);
+
+    var allPast=true;
+    for(var i=0;i<nextCells.length;i++){
+      if(nextCells[i].y<ROWS){allPast=false;break;}
+    }
+    if(allPast)return null;
+
+    if(aiCanOccupy(b,nextCells)){
+      pos=nextPos;
+      continue;
+    }
+
+    var cur=aiShotCells(col,rot,colors,pos);
+    var inside=[];
+    for(i=0;i<cur.length;i++){
+      if(cur[i].y>=0&&cur[i].y<ROWS)inside.push(cur[i]);
+    }
+
+    if(inside.length===0)return null;
+
+    // 横カプセルで片側しか盤内にないケースは実ゲーム上固定できない
+    if(inside.length<cur.length && !(rot===1||rot===3))return null;
+
+    var id='ai';
+    for(i=0;i<inside.length;i++){
+      var c=inside[i];
+      if(b[c.y][c.x])return null;
+      b[c.y][c.x]={kind:'pill',color:c.color,owner:2,id:id};
+    }
+
+    var matches=aiFindMatches(b);
+    var virusHits=0;
+    for(i=0;i<matches.length;i++){
+      var mx=matches[i][0],my=matches[i][1];
+      if(b[my][mx]&&b[my][mx].kind==='virus')virusHits++;
+    }
+
+    var potential=0;
+    var minY=ROWS;
+    var depth=0;
+    for(i=0;i<inside.length;i++){
+      var q=inside[i];
+      potential+=aiPotentialRun(b,q.x,q.y,q.color);
+      if(q.y<minY)minY=q.y;
+      depth+=q.y;
+    }
+
+    // 上端が詰まっているほど危険
+    var topOccupancy=0;
+    for(var xx=0;xx<COLS;xx++){
+      if(b[0][xx])topOccupancy+=3;
+      if(b[1][xx])topOccupancy+=1;
+    }
+
+    return {
+      col:col,
+      rot:rot,
+      matchCount:matches.length,
+      virusHits:virusHits,
+      potential:potential,
+      minY:minY,
+      depth:depth,
+      topOccupancy:topOccupancy,
+      partial:(inside.length===1)
+    };
+  }
+  return null;
+}
+
+function scoreComMove(m,level){
+  if(!m)return -999999;
+
+  var score=0;
+
+  // レベルが高いほど、消去とウイルスを強く重視
+  score += m.matchCount * (level>=4 ? 18 : level>=2 ? 12 : 8);
+  score += m.virusHits * (level>=4 ? 75 : level>=2 ? 48 : 28);
+
+  // 次の消去につながる2～3個並び
+  score += m.potential * (level>=5 ? 8 : level>=3 ? 5 : 2);
+
+  // COMは下方向へ進むので、なるべく中央方向へ深く入れる
+  score += m.depth * (level>=4 ? 0.7 : 0.35);
+
+  // 発射口付近を詰まらせない
+  score -= m.topOccupancy * (level>=4 ? 22 : level>=2 ? 10 : 4);
+  if(m.minY<=1)score -= (level>=4 ? 65 : 25);
+
+  // 片側だけ盤内に残る手は、強いCOMほど必要時以外避ける
+  if(m.partial)score -= (level>=4 ? 12 : 3);
+
+  // 低レベルほど判断をぶらす
+  var noise={1:85,2:42,3:18,4:6,5:0}[level]||0;
+  score += (Math.random()*2-1)*noise;
+
+  return score;
+}
+
+function chooseComMove(){
+  var moves=[];
+
+  for(var rot=0;rot<4;rot++){
+    var min=0,max=COLS-1;
+    if(rot===0)max=COLS-2;
+    if(rot===2)min=1;
+
+    for(var col=min;col<=max;col++){
+      var m=aiSimulateMove(col,rot);
+      if(m)moves.push(m);
+    }
+  }
+
+  if(!moves.length){
+    return {col:Math.max(0,Math.min(COLS-1,players[2].col)),rot:3};
+  }
+
+  // LEVEL 1は大半をランダム、LEVEL 2も時々ランダム
+  if(comLevel===1 && Math.random()<0.72){
+    return moves[(Math.random()*moves.length)|0];
+  }
+  if(comLevel===2 && Math.random()<0.36){
+    return moves[(Math.random()*moves.length)|0];
+  }
+
+  var best=moves[0],bestScore=-Infinity;
+  for(var i=0;i<moves.length;i++){
+    var sc=scoreComMove(moves[i],comLevel);
+    if(sc>bestScore){
+      bestScore=sc;
+      best=moves[i];
+    }
+  }
+  return best;
+}
+
+function scheduleComTurn(){
+  if(gameMode!=='com'||turn!==2||gameEnded)return;
+
+  if(comTimer){
+    clearTimeout(comTimer);
+    comTimer=null;
+  }
+
+  var delays={1:950,2:800,3:650,4:500,5:360};
+  comTimer=setTimeout(function(){
+    comTimer=null;
+    if(gameMode!=='com'||turn!==2||gameEnded||animating)return;
+
+    var move=chooseComMove();
+    players[2].col=move.col;
+    players[2].rot=move.rot;
+    drawPreviews();
+
+    // 狙いを少し見せてから発射
+    comTimer=setTimeout(function(){
+      comTimer=null;
+      if(gameMode==='com'&&turn===2&&!gameEnded&&!animating){
+        fire(2);
+      }
+    },220);
+  },delays[comLevel]||650);
+}
+
+function updateModeUI(){
+  var modeBtns=document.querySelectorAll('.modeChoice');
+  for(var i=0;i<modeBtns.length;i++){
+    modeBtns[i].classList.toggle('selected',modeBtns[i].getAttribute('data-mode')===gameMode);
+  }
+
+  var levelBtns=document.querySelectorAll('.levelChoice');
+  for(i=0;i<levelBtns.length;i++){
+    levelBtns[i].classList.toggle('selected',parseInt(levelBtns[i].getAttribute('data-level'),10)===comLevel);
+  }
+
+  if(levelSelect)levelSelect.style.display=(gameMode==='com')?'flex':'none';
+  var label=document.getElementById('levelLabel');
+  if(label)label.style.display=(gameMode==='com')?'block':'none';
+
+  if(topZone)topZone.classList.toggle('comMode',gameMode==='com');
+  if(comBadge)comBadge.textContent='COM LV'+comLevel;
+}
+
+function fire(p){
+  if(p!==turn||paused||animating||gameEnded||!validAim(p))return;
+  var pl=players[p];
+  chainDepth=0;
+  turnVirusCleared=false;
+  chainPushBonusAwarded=false;
+  pendingFieldShiftCount=0;
+  pendingFieldShiftOwner=p;
+  pl.shots++;
+  var pair=pl.next.slice();
+
+  // PLAYER 2 の操作エリアは180度回転表示されているため、
+  // 画面上で見えている色配置と盤面上の色配置が一致するように補正する。
+  if(p===2){
+    pair=[pair[1],pair[0]];
+  }
+
+  pl.next=makePair();
+  animating=true;
+  var startRow=(p===1)?ROWS: -1;
+  shot={
+    player:p,
+    col:pl.col,
+    rot:pl.rot,
+    colors:pair,
+    pos:startRow,
+    speed:0,
+    resolved:false
+  };
+  drawPreviews();
+}
+function shotCellsAt(s,pos){
+  var result=[];
+
+  // 先端消去後に入ってくる後端1色だけのショット
+  if(s.single){
+    result.push({x:s.col,y:pos,color:s.color});
+    return result;
+  }
+
+  // rot: 0=右、1=下、2=左、3=上
+  if(s.rot===0){
+    result.push({x:s.col,y:pos,color:s.colors[0]});
+    result.push({x:s.col+1,y:pos,color:s.colors[1]});
+  }else if(s.rot===1){
+    result.push({x:s.col,y:pos,color:s.colors[0]});
+    result.push({x:s.col,y:pos+1,color:s.colors[1]});
+  }else if(s.rot===2){
+    result.push({x:s.col,y:pos,color:s.colors[0]});
+    result.push({x:s.col-1,y:pos,color:s.colors[1]});
+  }else{
+    result.push({x:s.col,y:pos,color:s.colors[0]});
+    result.push({x:s.col,y:pos-1,color:s.colors[1]});
+  }
+  return result;
+}
+function canShotOccupy(s,pos){
+  var cells=shotCellsAt(s,pos);
+  for(var i=0;i<cells.length;i++){
+    var c=cells[i];
+    if(c.x<0||c.x>=COLS)return false;
+    if(c.y>=0&&c.y<ROWS&&board[c.y][c.x])return false;
+  }
+  return true;
+}
+function advanceShot(dt){
+  if(!shot)return;
+  shot.speed+=dt*0.026;
+  while(shot.speed>=1&&!shot.resolved){
+    shot.speed-=1;
+    var dir=shot.player===1?-1:1;
+    var nextPos=shot.pos+dir;
+
+    // 盤面を完全に通り抜けたら消滅
+    var nextCells=shotCellsAt(shot,nextPos);
+    var allPast=true;
+    for(var i=0;i<nextCells.length;i++){
+      var cy=nextCells[i].y;
+      if(shot.player===1){
+        if(cy>=0)allPast=false;
+      }else{
+        if(cy<ROWS)allPast=false;
+      }
+    }
+    if(allPast){
+      shot.resolved=true;
+      shot=null;
+      finishTurn();
+      return;
+    }
+
+    if(canShotOccupy(shot,nextPos)){
+      shot.pos=nextPos;
+    }else{
+      // 現在位置で固定する。
+      // 縦カプセルは入口側に1マスしか空きがなくても、先端1色だけ盤内へ着地できる。
+      var cur=shotCellsAt(shot,shot.pos),inside=[],outside=[];
+      for(i=0;i<cur.length;i++){
+        if(cur[i].y>=0&&cur[i].y<ROWS)inside.push(cur[i]);
+        else outside.push(cur[i]);
+      }
+
+      if(inside.length===cur.length){
+        var id=Date.now()+Math.random();
+        for(i=0;i<cur.length;i++){
+          var c=cur[i];
+          board[c.y][c.x]={kind:'pill',color:c.color,owner:shot.player,id:id,born:players[shot.player].shots};
+        }
+        var owner=shot.player;
+        shot.resolved=true;shot=null;
+        beginResolve(owner);
+
+      }else if(!shot.single && inside.length===1 && outside.length===1 && (shot.rot===1 || shot.rot===3)){
+        // 新ルール：盤内に入った1色だけ有効。盤外側の半分は必ず破棄する。
+        var tip=inside[0];
+        var owner=shot.player;
+        var id=Date.now()+Math.random();
+
+        board[tip.y][tip.x]={
+          kind:'pill',color:tip.color,owner:owner,id:id,born:players[owner].shots
+        };
+
+        shot.resolved=true;
+        shot=null;
+        beginResolve(owner);
+
+      }else{
+        // 盤内に1マスも入れない場合は、そのまま消滅。ゲームオーバーにはしない。
+        shot.resolved=true;shot=null;
+        finishTurn();
+      }
+      return;
+    }
+  }
+}
+function launchPendingRearShot(){
+  pendingRearShot=null;
+  return false;
+}
+
+function findMatches(){
+  var mark={};
+
+  // 横方向
+  for(var y=0;y<ROWS;y++){
+    var x=0;
+    while(x<COLS){
+      if(!board[y][x]){x++;continue;}
+      var color=board[y][x].color;
+      var start=x;
+      while(x<COLS && board[y][x] && board[y][x].color===color)x++;
+      var len=x-start;
+      if(len>=4){
+        for(var k=start;k<x;k++)mark[k+','+y]=1;
+      }
+    }
+  }
+
+  // 縦方向
+  for(var x=0;x<COLS;x++){
+    var y=0;
+    while(y<ROWS){
+      if(!board[y][x]){y++;continue;}
+      var color=board[y][x].color;
+      var start=y;
+      while(y<ROWS && board[y][x] && board[y][x].color===color)y++;
+      var len=y-start;
+      if(len>=4){
+        for(var k=start;k<y;k++)mark[x+','+k]=1;
+      }
+    }
+  }
+
+  var out=[];
+  for(var key in mark){
+    if(Object.prototype.hasOwnProperty.call(mark,key)){
+      var a=key.split(',');
+      out.push([parseInt(a[0],10),parseInt(a[1],10)]);
+    }
+  }
+  return out;
+}
+function beginResolve(owner){
+  clearSet=findMatches();
+  if(clearSet.length){
+    chainDepth=1;
+    clearTimer=0;
+    animating=true;
+    shot={mode:'clear',player:owner};
+  }else{
+    finishTurn();
+  }
+}
+
+function spawnPenaltyBlocks(attacker,colors){
+  if(!colors || !colors.length)return;
+
+  var opponent=attacker===1?2:1;
+  var mid=frontLine;
+  var candidates=[];
+
+  // 相手陣地の空いているセルを候補にする
+  if(opponent===2){
+    // PLAYER 2側：上半分
+    for(var y=0;y<mid;y++){
+      for(var x=0;x<COLS;x++){
+        if(!board[y][x])candidates.push([x,y]);
+      }
+    }
+  }else{
+    // PLAYER 1側：下半分
+    for(var y=mid;y<ROWS;y++){
+      for(var x=0;x<COLS;x++){
+        if(!board[y][x])candidates.push([x,y]);
+      }
+    }
+  }
+
+  // ランダム化
+  for(var i=candidates.length-1;i>0;i--){
+    var j=(Math.random()*(i+1))|0;
+    var t=candidates[i];
+    candidates[i]=candidates[j];
+    candidates[j]=t;
+  }
+
+  // 消したウイルス1個につき、同色ブロックを1個出現
+  for(var i=0;i<colors.length && i<candidates.length;i++){
+    var p=candidates[i];
+
+    board[p[1]][p[0]]={
+      kind:'pill',
+      color:colors[i],
+      owner:opponent,
+      id:'garbage_'+Date.now()+'_'+Math.random(),
+      born:players[opponent].shots
+    };
+  }
+}
+
+
+function addFrontPressure(owner,virusesRemoved){
+  // 通常4消し:+1、2連鎖目以降:+1。
+  // ウイルス消去は別ルールで盤面全体を1行押し込む。
+  var gain=1 + (chainDepth>=2?1:0);
+  frontGauge[owner]+=gain;
+
+  if(frontGauge[owner]>=3){
+    frontGauge[owner]-=3;
+    return true;
+  }
+  return false;
+}
+
+function startFrontShift(owner){ return false; }
+
+function updateFrontShift(dt){
+  if(!frontShiftAnim)return;
+
+  frontShiftAnim.progress+=dt/frontShiftAnim.duration;
+
+  if(frontShiftAnim.progress>=1){
+    var owner=frontShiftAnim.owner;
+    frontLine=frontShiftAnim.to;
+    frontShiftAnim=null;
+
+    // 危険ラインまで押し切れば勝利
+    if((owner===1 && frontLine<=frontMin) || (owner===2 && frontLine>=frontMax)){
+      endGame(owner);
+      return;
+    }
+
+    startGravityAnimation(owner);
+  }
+}
+
+function doClear(owner){
+  var virusesRemoved=0;
+  var anyRemoved = clearSet.length>0;
+
+  for(var i=0;i<clearSet.length;i++){
+    var x=clearSet[i][0];
+    var y=clearSet[i][1];
+    var o=board[y][x];
+
+    if(o && o.kind==='virus'){
+      virusesRemoved++;
+    }
+    board[y][x]=null;
+  }
+
+  if(virusesRemoved>0){
+    players[owner].kills+=virusesRemoved;
+    players[owner].score+=virusesRemoved;
+  }
+
+  // 新ルール：
+  // ウイルスを含むかどうかに関係なく、4個以上消した手は基本1行押す。
+  // その手で最初の消去イベントの時だけ加算する。
+  if(anyRemoved && !turnVirusCleared){
+    turnVirusCleared=true;
+    pendingFieldShiftCount+=1;
+    pendingFieldShiftOwner=owner;
+  }
+
+  // 2連鎖目以降になったら、追加でもう1行押す。
+  // 1手につき追加は1回だけ。
+  if(chainDepth>=2 && !chainPushBonusAwarded){
+    pendingFieldShiftCount+=1;
+    pendingFieldShiftOwner=owner;
+    chainPushBonusAwarded=true;
+  }
+
+  clearSet=[];
+  updateHud();
+  shot=null;
+
+  // 消去後は、各プレイヤー由来のカプセルをそれぞれの進行方向へ詰める。
+  startGravityAnimation(owner);
+}
+
+function collectMovableGroups(owner){
+  var ids={};
+
+  for(var y=0;y<ROWS;y++){
+    for(var x=0;x<COLS;x++){
+      var o=board[y][x];
+      if(o && o.kind==='pill' && o.owner===owner){
+        if(!ids[o.id])ids[o.id]=[];
+        ids[o.id].push([x,y]);
+      }
+    }
+  }
+
+  var groups=[];
+  var idList=Object.keys(ids);
+
+  // 消したプレイヤーの余りカプセルだけを相手方向へ進める。PLAYER 1は上、PLAYER 2は下。
+  var dy=owner===1?-1:1;
+
+  for(var i=0;i<idList.length;i++){
+    var id=idList[i];
+    var parts=ids[id];
+    var can=true;
+
+    for(var j=0;j<parts.length;j++){
+      var x=parts[j][0],y=parts[j][1];
+      var ny=y+dy;
+
+      // 相手側の端まで障害物がなければ、そのまま盤外へ抜けられる。
+      // 盤外は空きマスとして扱う。
+      if(ny<0||ny>=ROWS){
+        continue;
+      }
+
+      var target=board[ny][x];
+      var self=false;
+      for(var q=0;q<parts.length;q++){
+        if(parts[q][0]===x && parts[q][1]===ny){
+          self=true;
+          break;
+        }
+      }
+      if(target && !self){can=false;break;}
+    }
+
+    if(can){
+      groups.push({id:id,parts:parts,dy:dy,owner:owner});
+    }
+  }
+
+  return groups;
+}
+
+
+function collectAllGravityGroups(owner){
+  // 消去したプレイヤー由来の余りカプセルだけを、相手方向へ動かす。
+  // PLAYER 1は上方向、PLAYER 2は下方向。
+  return collectMovableGroups(owner);
+}
+
+function startGravityAnimation(owner){
+  gravityOwner=owner;
+
+  var groups=collectAllGravityGroups(owner);
+
+  gravityAnim={
+    owner:owner,
+    progress:0,
+    duration:110,
+    groups:groups
+  };
+
+  if(gravityAnim.groups.length===0){
+    gravityAnim=null;
+    finishGravityResolution(owner);
+  }
+}
+
+function applyGravityStep(anim){
+  var movedObjects=[];
+
+  // まず移動対象を保存する
+  for(var i=0;i<anim.groups.length;i++){
+    var g=anim.groups[i];
+
+    for(var j=0;j<g.parts.length;j++){
+      var x=g.parts[j][0];
+      var y=g.parts[j][1];
+      var obj=board[y][x];
+
+      if(!obj || obj.kind!=='pill')continue;
+
+      movedObjects.push({
+        x:x,
+        y:y,
+        ny:y+g.dy,
+        obj:obj,
+        owner:g.owner
+      });
+    }
+  }
+
+  // 元位置を空ける
+  for(i=0;i<movedObjects.length;i++){
+    var m=movedObjects[i];
+    if(board[m.y][m.x]===m.obj){
+      board[m.y][m.x]=null;
+    }
+  }
+
+  // 1マス進行方向へ配置する。
+  // 端を越えた場合は再配置せず、そのまま盤外へ消す。
+  for(i=0;i<movedObjects.length;i++){
+    m=movedObjects[i];
+
+    if(m.ny<0 || m.ny>=ROWS){
+      // 盤外へ抜けた余りカプセルは消滅
+      continue;
+    }
+
+    if(!board[m.ny][m.x]){
+      // PLAYER 1由来が中央線より上、PLAYER 2由来が中央線より下へ入ったら
+      // 「消去後に相手陣地へ流れ込んだ余りカプセル」として扱う。
+      if((m.owner===1 && m.ny<frontLine) || (m.owner===2 && m.ny>=frontLine)){
+        m.obj.harmlessIntruder=true;
+      }
+
+      board[m.ny][m.x]=m.obj;
+    }else{
+      // 万一移動先が埋まっていた場合は元位置へ戻す
+      board[m.y][m.x]=m.obj;
+    }
+  }
+}
+
+function updateGravityAnimation(dt){
+  if(!gravityAnim)return;
+
+  gravityAnim.progress+=dt/gravityAnim.duration;
+
+  if(gravityAnim.progress>=1){
+    applyGravityStep(gravityAnim);
+
+    var owner=gravityAnim.owner;
+    var nextGroups=collectAllGravityGroups(owner);
+
+    if(nextGroups.length){
+      gravityAnim={
+        owner:owner,
+        progress:0,
+        duration:110,
+        groups:nextGroups
+      };
+    }else{
+      gravityAnim=null;
+      finishGravityResolution(owner);
+    }
+  }
+}
+
+
+
+
+
+function edgeOccupiedBeforeFieldShift(owner){
+  var y=(owner===1)?0:ROWS-1;
+  for(var x=0;x<COLS;x++){
+    var o=board[y][x];
+    // 消去後に相手陣地へ流れ込んだ余りカプセルだけでは敗北にしない
+    if(o && !(o.kind==='pill' && o.harmlessIntruder))return true;
+  }
+  return false;
+}
+
+function dangerMouthOccupied(loser){
+  var y=(loser===2)?0:ROWS-1;
+  for(var x=0;x<COLS;x++){
+    var o=board[y][x];
+    // 流入してきた余りカプセルはDANGER判定の対象外
+    if(o && !(o.kind==='pill' && o.harmlessIntruder))return true;
+  }
+  return false;
+}
+
+function startFieldShift(owner){
+  var dir=owner===1?-1:1;
+
+  // すでに発射口まで埋まっている状態でさらに押されたら相手敗北。
+  if(edgeOccupiedBeforeFieldShift(owner)){
+    endGame(owner,'DANGER');
+    return;
+  }
+
+  fieldShiftAnim={
+    owner:owner,
+    dir:dir,
+    progress:0,
+    duration:240
+  };
+  animating=true;
+}
+
+function updateFieldShift(dt){
+  if(!fieldShiftAnim)return;
+
+  fieldShiftAnim.progress+=dt/fieldShiftAnim.duration;
+
+  if(fieldShiftAnim.progress>=1){
+    var owner=fieldShiftAnim.owner;
+    var dir=fieldShiftAnim.dir;
+    var loser=owner===1?2:1;
+
+    var next=Array.from({length:ROWS},function(){return Array(COLS).fill(null);});
+
+    // ウイルス・カプセルを含む盤面全体を1行移動する。
+    for(var y=0;y<ROWS;y++){
+      for(var x=0;x<COLS;x++){
+        var o=board[y][x];
+        if(!o)continue;
+        var ny=y+dir;
+        if(ny>=0 && ny<ROWS){
+          next[ny][x]=o;
+        }
+      }
+    }
+
+    board=next;
+    frontLine+=dir;
+    fieldShiftAnim=null;
+    pendingFieldShiftCount=Math.max(0,pendingFieldShiftCount-1);
+
+    // 押し込み後、相手の発射口（最外周1行）へ何か到達したら即敗北。
+    if(dangerMouthOccupied(loser)){
+      endGame(owner,'DANGER');
+      return;
+    }
+
+    // 2連鎖ボーナス等でもう1行押す予約があれば続ける。
+    if(pendingFieldShiftCount>0){
+      startFieldShift(owner);
+      return;
+    }
+
+    // 押し込みで新たに4個並んだ場合は連鎖として処理。
+    var more=findMatches();
+    if(more.length){
+      chainDepth++;
+      clearSet=more;
+      clearTimer=0;
+      shot={mode:'clear',player:owner};
+      return;
+    }
+
+    finishTurn();
+  }
+}
+
+function finishGravityResolution(owner){
+  // 重力後に4個以上が新たに揃えば連鎖。
+  var more=findMatches();
+
+  if(more.length){
+    chainDepth++;
+    clearSet=more;
+    clearTimer=0;
+    shot={mode:'clear',player:owner};
+    return;
+  }
+
+  // 連鎖がすべて終わってから、予約された分だけ相手側へ押す。
+  if(pendingFieldShiftCount>0){
+    startFieldShift(pendingFieldShiftOwner||owner);
+    return;
+  }
+
+  finishTurn();
+}
+
+function completeTurnSwitch(){
+  animating=false;
+  chainDepth=0;
+  turnVirusCleared=false;
+  chainPushBonusAwarded=false;
+  pendingFieldShiftCount=0;
+  turn=turn===1?2:1;
+  updateHud();
+  showTurn();
+
+  if(gameMode==='com'&&turn===2){
+    scheduleComTurn();
+  }
+}
+
+function finishTurn(){
+  completeTurnSwitch();
+}
+function endGame(forcedWinner,reason){
+  gameEnded=true;
+  if(comTimer){clearTimeout(comTimer);comTimer=null;}
+  animating=false;
+  shot=null;
+  gravityAnim=null;
+  frontShiftAnim=null;
+  fieldShiftAnim=null;
+  pendingFieldShiftCount=0;
+  pendingRearShot=null;
+  fadeCapsules=[];
+  pendingTurnSwitch=false;
+  postFadeGravity=false;
+
+  overlay.classList.remove('hidden');
+  overlay.querySelector('h1').textContent=(gameMode==='com'&&forcedWinner===2)?'COM WIN!':('PLAYER '+forcedWinner+' WIN!');
+
+  var ps=overlay.querySelectorAll('p');
+  if(ps[0])ps[0].textContent='相手のブロックがDANGER LINEを越えて発射口まで到達しました。';
+  if(ps[1])ps[1].textContent='この対戦は押し切りで決着します。';
+  if(ps[2])ps[2].textContent='もう一度遊ぶ場合は下のボタンを押してください。';
+  startBtn.textContent='再戦する';
+}
+
+function palette(c){
+  if(c==='R')return {m:'#e23b51',l:'#ff929d',d:'#861d32'};
+  if(c==='B')return {m:'#348fe0',l:'#90c8ff',d:'#194b8d'};
+  return {m:'#edc43d',l:'#fff08b',d:'#986916'};
+}
+function rect(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function tile(kind,c,size,frame){
+  frame=frame||0;
+  var key=kind+c+size+'_'+frame;
+  if(tileCache[key])return tileCache[key];
+
+  var cv=document.createElement('canvas');
+  cv.width=size;cv.height=size;
+  var g=cv.getContext('2d'),p=palette(c);
+
+  function roundRectPath(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+  function fillRoundRect(ctx,x,y,w,h,r,color){
+    roundRectPath(ctx,x,y,w,h,r);
+    ctx.fillStyle=color;
+    ctx.fill();
+  }
+
+  function fillHalfShape(ctx,dir,x,y,w,h,r,color){
+    ctx.beginPath();
+    if(dir==='left'){
+      ctx.moveTo(x+w,y);
+      ctx.lineTo(x+r,y);
+      ctx.arcTo(x,y,x,y+r,r);
+      ctx.lineTo(x,y+h-r);
+      ctx.arcTo(x,y+h,x+r,y+h,r);
+      ctx.lineTo(x+w,y+h);
+      ctx.closePath();
+    }else if(dir==='right'){
+      ctx.moveTo(x,y);
+      ctx.lineTo(x+w-r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.lineTo(x+w,y+h-r);
+      ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x,y+h);
+      ctx.closePath();
+    }else if(dir==='top'){
+      ctx.moveTo(x,y+h);
+      ctx.lineTo(x,y+r);
+      ctx.arcTo(x,y,x+r,y,r);
+      ctx.lineTo(x+w-r,y);
+      ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h);
+      ctx.closePath();
+    }else if(dir==='bottom'){
+      ctx.moveTo(x,y);
+      ctx.lineTo(x,y+h-r);
+      ctx.arcTo(x,y+h,x+r,y+h,r);
+      ctx.lineTo(x+w-r,y+h);
+      ctx.arcTo(x+w,y+h,x+w,y+h-r,r);
+      ctx.lineTo(x+w,y);
+      ctx.closePath();
+    }
+    ctx.fillStyle=color;
+    ctx.fill();
+  }
+
+  function drawSinglePill(){
+    // 少し小さく、より丸く
+    var x=size*.14,y=size*.16,w=size*.72,h=size*.68,r=size*.29;
+    fillRoundRect(g,x,y,w,h,r,p.d);
+    fillRoundRect(g,x+size*.03,y+size*.03,w-size*.06,h-size*.06,r*0.97,p.m);
+
+    g.save();
+    roundRectPath(g,x+size*.03,y+size*.03,w-size*.06,h-size*.06,r*0.97);
+    g.clip();
+    g.fillStyle=p.l;
+    g.fillRect(x+size*.08,y+size*.08,w*.40,h*.16);
+    g.fillRect(x+size*.08,y+size*.22,w*.12,h*.28);
+    g.restore();
+
+    fillRoundRect(g,x+size*.09,y+size*.09,w*.18,h*.08,size*.045,'rgba(255,255,255,.20)');
+  }
+
+  function drawHalf(dir){
+    // 2色カプセルは接合側は密着させたまま、全体は少し小さくする
+    var ox=size*.06, oy=size*.11, ow=size*.88, oh=size*.78;
+    var vx=size*.11, vy=size*.06, vw=size*.78, vh=size*.88;
+    var inset=size*.03, r=size*.31, ri=size*.27;
+
+    if(dir==='left' || dir==='right'){
+      fillHalfShape(g,dir,0,oy,size,oh,r,p.d);
+      fillHalfShape(g,dir,inset,oy+inset,size-inset*2,oh-inset*2,ri,p.m);
+
+      g.fillStyle='rgba(0,0,0,.20)';
+      if(dir==='left'){
+        g.fillRect(size*.96,oy+size*.08,size*.04,oh-size*.16);
+      }else{
+        g.fillRect(0,oy+size*.08,size*.04,oh-size*.16);
+      }
+
+      g.save();
+      if(dir==='left'){
+        g.beginPath(); g.rect(size*.12,oy+size*.05,size*.34,oh-size*.10); g.clip();
+        g.fillStyle=p.l;
+        g.fillRect(size*.14,oy+size*.07,size*.16,size*.08);
+        g.fillRect(size*.14,oy+size*.19,size*.08,size*.19);
+        fillRoundRect(g,size*.14,oy+size*.07,size*.11,size*.06,size*.03,'rgba(255,255,255,.18)');
+      }else{
+        g.beginPath(); g.rect(size*.54,oy+size*.05,size*.34,oh-size*.10); g.clip();
+        g.fillStyle=p.l;
+        g.fillRect(size*.58,oy+size*.07,size*.16,size*.08);
+        g.fillRect(size*.58,oy+size*.19,size*.08,size*.19);
+        fillRoundRect(g,size*.58,oy+size*.07,size*.11,size*.06,size*.03,'rgba(255,255,255,.18)');
+      }
+      g.restore();
+
+    }else{
+      fillHalfShape(g,dir,vx,0,vw,size,r,p.d);
+      fillHalfShape(g,dir,vx+inset,inset,vw-inset*2,size-inset*2,ri,p.m);
+
+      g.fillStyle='rgba(0,0,0,.20)';
+      if(dir==='top'){
+        g.fillRect(vx+size*.08,size*.96,vw-size*.16,size*.04);
+      }else{
+        g.fillRect(vx+size*.08,0,vw-size*.16,size*.04);
+      }
+
+      g.save();
+      if(dir==='top'){
+        g.beginPath(); g.rect(vx+size*.05,size*.12,vw-size*.10,size*.34); g.clip();
+        g.fillStyle=p.l;
+        g.fillRect(vx+size*.07,size*.14,size*.16,size*.08);
+        g.fillRect(vx+size*.07,size*.26,size*.08,size*.17);
+        fillRoundRect(g,vx+size*.07,size*.14,size*.11,size*.06,size*.03,'rgba(255,255,255,.18)');
+      }else{
+        g.beginPath(); g.rect(vx+size*.05,size*.54,vw-size*.10,size*.34); g.clip();
+        g.fillStyle=p.l;
+        g.fillRect(vx+size*.07,size*.58,size*.16,size*.08);
+        g.fillRect(vx+size*.07,size*.70,size*.08,size*.14);
+        fillRoundRect(g,vx+size*.07,size*.58,size*.11,size*.06,size*.03,'rgba(255,255,255,.18)');
+      }
+      g.restore();
+    }
+  }
+
+  if(kind==='virus'){
+    var arm=[0,1,-1][frame%3];
+    var leg=[0,-1,1][frame%3];
+    rect(g,size*.15,size*.28,size*.70,size*.52,p.m);
+    rect(g,size*.06-arm,size*.42,size*.17,size*.17,p.m);
+    rect(g,size*.77+arm,size*.42,size*.17,size*.17,p.m);
+    rect(g,size*.24+leg,size*.14,size*.17,size*.18,p.m);
+    rect(g,size*.59-leg,size*.14,size*.17,size*.18,p.m);
+    rect(g,size*.27,size*.36,size*.16,size*.13,'#fff');
+    rect(g,size*.57,size*.36,size*.16,size*.13,'#fff');
+    rect(g,size*.34,size*.40,size*.05,size*.05,'#101426');
+    rect(g,size*.61,size*.40,size*.05,size*.05,'#101426');
+    rect(g,size*.33,size*.66,size*.34,size*.07,p.d);
+    rect(g,size*.18,size*.30,size*.12,size*.09,p.l);
+  }else if(kind==='pill_single'){
+    drawSinglePill();
+  }else if(kind==='pill_left'){
+    drawHalf('left');
+  }else if(kind==='pill_right'){
+    drawHalf('right');
+  }else if(kind==='pill_top'){
+    drawHalf('top');
+  }else if(kind==='pill_bottom'){
+    drawHalf('bottom');
+  }else{
+    drawSinglePill();
+  }
+
+  tileCache[key]=cv;
+  return cv;
+}
+function text(g,s,x,y,size,align){
+  g.save();g.font='900 '+size+'px ui-monospace,Menlo,monospace';
+  g.textAlign=align||'left';g.textBaseline='top';g.fillStyle='#f5edc8';
+  g.shadowColor='#050713';g.shadowOffsetX=2;g.shadowOffsetY=2;g.fillText(s,x,y);g.restore();
+}
+
+function pillKindAt(x,y,o){
+  if(!o || o.kind!=='pill') return 'pill_single';
+  var left=(x>0 && board[y][x-1] && board[y][x-1].kind==='pill' && board[y][x-1].id===o.id);
+  var right=(x<COLS-1 && board[y][x+1] && board[y][x+1].kind==='pill' && board[y][x+1].id===o.id);
+  var up=(y>0 && board[y-1][x] && board[y-1][x].kind==='pill' && board[y-1][x].id===o.id);
+  var down=(y<ROWS-1 && board[y+1][x] && board[y+1][x].kind==='pill' && board[y+1][x].id===o.id);
+
+  if(right) return 'pill_left';
+  if(left) return 'pill_right';
+  if(down) return 'pill_top';
+  if(up) return 'pill_bottom';
+  return 'pill_single';
+}
+
+function previewPillKind(rot,index){
+  if(rot===0) return index===0 ? 'pill_left' : 'pill_right';
+  if(rot===1) return index===0 ? 'pill_top' : 'pill_bottom';
+  if(rot===2) return index===0 ? 'pill_right' : 'pill_left';
+  return index===0 ? 'pill_bottom' : 'pill_top';
+}
+
+function drawPreviews(){
+  for(var p=1;p<=2;p++){
+    var cv=previews[p];if(!cv)continue;
+    var r=cv.getBoundingClientRect(),pd=Math.min(window.devicePixelRatio||1,2);
+    cv.width=Math.max(1,Math.floor(r.width*pd));cv.height=Math.max(1,Math.floor(r.height*pd));
+    var g=cv.getContext('2d');g.setTransform(pd,0,0,pd,0,0);
+    g.clearRect(0,0,r.width,r.height);g.fillStyle='#11182f';g.fillRect(0,0,r.width,r.height);
+    var pair=players[p].next||['R','B'],s=Math.min(r.height*.55,r.width*.28);
+    var cx=r.width/2,cy=r.height/2;
+    if(players[p].rot===0){
+      g.drawImage(tile(previewPillKind(players[p].rot,0),pair[0],Math.ceil(s)),cx-s,cy-s/2,s,s);
+      g.drawImage(tile(previewPillKind(players[p].rot,1),pair[1],Math.ceil(s)),cx,cy-s/2,s,s);
+    }else if(players[p].rot===1){
+      g.drawImage(tile(previewPillKind(players[p].rot,0),pair[0],Math.ceil(s)),cx-s/2,cy-s,s,s);
+      g.drawImage(tile(previewPillKind(players[p].rot,1),pair[1],Math.ceil(s)),cx-s/2,cy,s,s);
+    }else if(players[p].rot===2){
+      g.drawImage(tile(previewPillKind(players[p].rot,0),pair[0],Math.ceil(s)),cx,cy-s/2,s,s);
+      g.drawImage(tile(previewPillKind(players[p].rot,1),pair[1],Math.ceil(s)),cx-s,cy-s/2,s,s);
+    }else{
+      g.drawImage(tile(previewPillKind(players[p].rot,0),pair[0],Math.ceil(s)),cx-s/2,cy,s,s);
+      g.drawImage(tile(previewPillKind(players[p].rot,1),pair[1],Math.ceil(s)),cx-s/2,cy-s,s,s);
+    }
+  }
+}
+function drawBoard(){
+  og.setTransform(1,0,0,1,0,0);og.clearRect(0,0,off.width,off.height);
+  og.scale(dpr,dpr);
+  og.fillStyle='#0d1226';og.fillRect(0,0,W,H);
+
+  var fieldShiftOffset=0;
+  if(fieldShiftAnim){
+    var fse=fieldShiftAnim.progress;
+    fse=1-Math.pow(1-fse,2);
+    fieldShiftOffset=fieldShiftAnim.dir*cell*fse;
+  }
+
+  // 背景グリッド
+  for(var y=0;y<H;y+=16){
+    for(var x=0;x<W;x+=16){
+      if(((x+y)/16)%2===0){og.fillStyle='#111a33';og.fillRect(x,y,16,16);}
+    }
+  }
+
+  // PLAYER 1：右下。見出し大、数字特大、pointsは小さく表示
+
+
+  // ボード外枠
+  og.fillStyle='#8097c9';og.fillRect(bx-7,by-7,bw+14,bh+14);
+  og.fillStyle='#d8e5ff';og.fillRect(bx-4,by-4,bw+8,bh+8);
+  og.fillStyle='#18213e';og.fillRect(bx,by,bw,bh);
+
+  // DANGER ZONE：最外周1行。ここへ何か到達した時点で敗北。
+  og.save();
+  og.fillStyle='rgba(255,70,90,.075)';
+  og.fillRect(bx,by,bw,cell);
+  og.fillRect(bx,by+bh-cell,bw,cell);
+  og.fillStyle='rgba(255,80,95,.72)';
+  og.fillRect(bx,by+cell-1,bw,2);
+  og.fillRect(bx,by+bh-cell-1,bw,2);
+  og.restore();
+
+  // 可動式の前線
+  var shownFront=frontLine;
+  if(frontShiftAnim){
+    var fe=frontShiftAnim.progress;
+    fe=1-Math.pow(1-fe,2);
+    shownFront=frontShiftAnim.from+(frontShiftAnim.to-frontShiftAnim.from)*fe;
+  }
+  var mid=by+shownFront*cell+fieldShiftOffset;
+
+  og.save();
+  og.shadowBlur=8;
+  og.shadowColor='#8a8a8a';
+  og.fillStyle='#8a8a8a';
+  og.fillRect(bx,mid-2,bw,4);
+  og.restore();
+
+  // セル
+  for(y=0;y<ROWS;y++){
+    for(x=0;x<COLS;x++){
+      var o=board[y][x];
+      if(o){
+        var movingNow=false;
+        var fadingNow=isFadingCell(x,y);
+        if(gravityAnim){
+          for(var gi=0;gi<gravityAnim.groups.length;gi++){
+            var gp=gravityAnim.groups[gi];
+            for(var gj=0;gj<gp.parts.length;gj++){
+              if(gp.parts[gj][0]===x && gp.parts[gj][1]===y){
+                movingNow=true;
+                break;
+              }
+            }
+            if(movingNow)break;
+          }
+        }
+
+        var blink=false;
+        if(clearSet.length&&Math.floor(clearTimer/65)%2===1){
+          for(var i=0;i<clearSet.length;i++){
+            if(clearSet[i][0]===x&&clearSet[i][1]===y){blink=true;break;}
+          }
+        }
+        if(!blink && !movingNow && !fadingNow){
+          var virusFrame=Math.floor(virusAnimTime/220)%3;
+          var t=tile(o.kind==='virus' ? 'virus' : pillKindAt(x,y,o),o.color,cell,o.kind==='virus'?virusFrame:0);
+
+          if(o.kind==='virus' && o.owner===2){
+            // PLAYER 2側のウイルスは上下逆向きに表示
+            og.save();
+            og.translate(bx+x*cell+cell/2,by+y*cell+cell/2+fieldShiftOffset);
+            og.rotate(Math.PI);
+            og.drawImage(t,-cell/2,-cell/2,cell,cell);
+            og.restore();
+          }else{
+            og.drawImage(t,bx+x*cell,by+y*cell+fieldShiftOffset,cell,cell);
+          }
+        }
+      }
+    }
+  }
+
+  // 発射予告ガイド
+  if(!animating&&!gameEnded&&!paused){
+    var pl=players[turn];
+    og.save();og.globalAlpha=.35;
+    var gx=bx+pl.col*cell;
+    og.fillStyle=turn===1?'#64a7ff':'#ff7590';
+    if(pl.rot===0){
+      og.fillRect(gx,by,cell*2,bh);
+    }else if(pl.rot===2){
+      og.fillRect(gx-cell,by,cell*2,bh);
+    }else{
+      og.fillRect(gx,by,cell,bh);
+    }
+    og.restore();
+  }
+
+  // 旧フェード処理（現在は使用しない）
+  if(fadeCapsules.length){
+    for(var fi=0;fi<fadeCapsules.length;fi++){
+      var f=fadeCapsules[fi];
+      var alpha=1-Math.min(1,f.elapsed/fadeDuration);
+      var ft=tile('pill',f.obj.color,cell);
+      og.save();
+      og.globalAlpha=alpha;
+      og.drawImage(ft,bx+f.x*cell,by+f.y*cell,cell,cell);
+      og.restore();
+    }
+  }
+
+  // 各プレイヤーの発射方向へ詰まるアニメーション
+  if(gravityAnim){
+    var ease=gravityAnim.progress;
+    // 少し滑らかな補間
+    ease=1-Math.pow(1-ease,2);
+
+    for(var gi=0;gi<gravityAnim.groups.length;gi++){
+      var gp=gravityAnim.groups[gi];
+      for(var gj=0;gj<gp.parts.length;gj++){
+        var px=gp.parts[gj][0];
+        var py=gp.parts[gj][1];
+        var obj=board[py][px];
+        if(obj){
+          var ty=py+gp.dy*ease;
+          var gt=tile(pillKindAt(px,py,obj),obj.color,cell);
+          og.drawImage(gt,bx+px*cell,by+ty*cell,cell,cell);
+        }
+      }
+    }
+  }
+
+  // 飛行中カプセル
+  if(shot&&shot.mode!=='clear'){
+    var sc=shotCellsAt(shot,shot.pos);
+    for(i=0;i<sc.length;i++){
+      var c=sc[i];
+      if(c.y>-2&&c.y<ROWS+2){
+        var sk='pill_single';
+        if(!shot.single && sc.length===2){
+          sk=previewPillKind(shot.rot,i);
+        }
+        var tt=tile(sk,c.color,cell);
+        og.drawImage(tt,bx+c.x*cell,by+c.y*cell,cell,cell);
+      }
+    }
+  }
+
+
+  if(paused){
+    og.fillStyle='rgba(5,7,16,.72)';og.fillRect(0,0,W,H);
+    text(og,'PAUSE',W/2,H/2-16,26,'center');
+  }
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(off,0,0);
+}
+function loop(now){
+  var dt=now-last;if(!isFinite(dt)||dt<0)dt=16;if(dt>50)dt=50;last=now;
+  virusAnimTime+=dt;
+  if(!paused&&!gameEnded){
+    updateFadeCapsules(dt);
+    if(fieldShiftAnim){
+      updateFieldShift(dt);
+    }else if(frontShiftAnim){
+      updateFrontShift(dt);
+    }else if(gravityAnim){
+      updateGravityAnimation(dt);
+    }else if(shot&&shot.mode==='clear'){
+      clearTimer+=dt;
+      if(clearTimer>=420)doClear(shot.player);
+    }else if(shot){
+      advanceShot(dt);
+    }
+  }
+  drawBoard();
+  requestAnimationFrame(loop);
+}
+
+
+function bind(btn,fn){
+  btn.addEventListener('touchstart',function(e){e.preventDefault();btn.classList.add('down');fn()},{passive:false});
+  btn.addEventListener('touchend',function(e){e.preventDefault();btn.classList.remove('down')},{passive:false});
+  btn.addEventListener('touchcancel',function(){btn.classList.remove('down')});
+  btn.addEventListener('mousedown',function(){btn.classList.add('down');fn()});
+  btn.addEventListener('mouseup',function(){btn.classList.remove('down')});
+  btn.addEventListener('mouseleave',function(){btn.classList.remove('down')});
+}
+bind(leftBtns[1],function(){moveAim(1,-1)});
+bind(rightBtns[1],function(){moveAim(1,1)});
+bind(leftBtns[2],function(){if(gameMode!=='com')moveAim(2,1)});
+bind(rightBtns[2],function(){if(gameMode!=='com')moveAim(2,-1)});
+bind(rotBtns[1],function(){rotateAim(1)});
+bind(rotBtns[2],function(){if(gameMode!=='com')rotateAim(2)});
+bind(fireBtns[1],function(){fire(1)});
+bind(fireBtns[2],function(){if(gameMode!=='com')fire(2)});
+
+
+var modeChoices=document.querySelectorAll('.modeChoice');
+for(var mi=0;mi<modeChoices.length;mi++){
+  modeChoices[mi].addEventListener('click',function(){
+    gameMode=this.getAttribute('data-mode')||'com';
+    updateModeUI();
+  });
+}
+
+var levelChoices=document.querySelectorAll('.levelChoice');
+for(var li=0;li<levelChoices.length;li++){
+  levelChoices[li].addEventListener('click',function(){
+    comLevel=parseInt(this.getAttribute('data-level'),10)||3;
+    updateModeUI();
+  });
+}
+
+resetBtn.addEventListener('click',newGame);
+startBtn.addEventListener('click',function(){
+  overlay.querySelector('h1').textContent='VS CAPSULE LAB';
+  overlay.querySelectorAll('p')[0].textContent=(gameMode==='com')
+    ? '手前のPLAYER 1と、上側のCOMが対戦します。'
+    : '1台のiPhoneを上下から2人で使う2人対戦です。';
+  overlay.querySelectorAll('p')[1].textContent='同色4個以上を消すと盤面全体を相手側へ1行押します。';
+  overlay.querySelectorAll('p')[2].textContent='DANGER ZONEまで自分のウイルスや通常カプセルを押し込まれた側が敗北です。自分が消した後の余りカプセルは相手方向へ流れます。相手陣地を通過しても、それだけでは勝敗判定の原因にはなりません。';
+  startBtn.textContent='対戦開始';
+  newGame();
+});
+
+document.addEventListener('touchmove',function(e){e.preventDefault()},{passive:false});
+resize();
+resetBoard();
+players[1].next=makePair();players[2].next=makePair();
+updateModeUI();
+drawPreviews();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
